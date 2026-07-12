@@ -112,9 +112,64 @@
   @media(max-width:720px){
     header,.controls,.tabs,.wrap,.tagbar,.stats,.hint{padding-left:1rem;padding-right:1rem}
     .stats{margin-left:1rem;margin-right:1rem}
-    col.c-tags,col.c-series,col.c-author{width:0}
-    .td-tags,.td-series,.td-author,th.h-tags,th.h-series,th.h-author{display:none}
-    select{max-width:130px}
+    select{max-width:none;flex:1;min-width:calc(50% - .3rem)}
+    .search-wrap{min-width:100%}
+    .info{margin-left:0}
+
+    /* 表格轉卡片 */
+    table,thead,tbody,tr,td,th,colgroup,col{display:block}
+    thead{position:absolute;left:-9999px}      /* 隱藏表頭,改用 data-label */
+    table{table-layout:auto}
+    tbody tr{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:var(--radius);margin-bottom:.7rem;padding:.7rem .9rem;
+      position:relative;
+    }
+    tbody tr:hover{background:var(--surface)}
+    tbody td{
+      border:none;padding:.2rem 0;display:flex;
+      align-items:flex-start;gap:.6rem;
+    }
+    /* 用 data-label 當每格的欄位名 */
+    tbody td::before{
+      content:attr(data-label);flex:0 0 3.2em;
+      font-size:11px;color:var(--text3);padding-top:2px;
+      font-weight:600;
+    }
+    /* 書名獨佔一行、放大、無標籤前綴 */
+    tbody td.td-title{
+      font-size:15px;font-weight:600;line-height:1.4;
+      padding:.1rem 0 .4rem;
+    }
+    tbody td.td-title::before{display:none}
+    /* 書號淡化,浮右上 */
+    tbody td.td-id{
+      position:absolute;top:.6rem;right:.9rem;padding:0;font-size:11px;
+    }
+    tbody td.td-id::before{display:none}
+    /* 星等左上,無前綴 */
+    tbody td:first-child{padding-bottom:.3rem}
+    tbody td:first-child::before{display:none}
+    .td-tags{flex-wrap:wrap}
+    .td-tags::before{flex-basis:100%;margin-bottom:2px}
+
+    /* 套書/統計頁的簡易表格維持正常表格排列(不轉卡片) */
+    #content .wrap table.plain,
+    #content .wrap table.plain thead,
+    #content .wrap table.plain tbody,
+    #content .wrap table.plain tr,
+    #content .wrap table.plain td,
+    #content .wrap table.plain th{display:revert}
+    #content .wrap table.plain{display:table;width:100%}
+    #content .wrap table.plain tr{
+      background:none;border:none;border-radius:0;margin:0;padding:0;
+      border-bottom:1px solid var(--border);
+    }
+    #content .wrap table.plain td{
+      display:table-cell;border:none;padding:7px 8px;
+    }
+    #content .wrap table.plain td::before{display:none}
+    #content .wrap table.plain .badge{white-space:nowrap}
   }
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -251,15 +306,15 @@
 
   function rowHtml(b, showDate){
     return '<tr>'+
-      '<td>'+starHtml(b.id)+'</td>'+
-      '<td class="td-id">'+b.id+'</td>'+
-      '<td class="td-title">'+esc(b.t)+'</td>'+
-      '<td class="td-author">'+esc(b.a)+'</td>'+
-      '<td class="td-cat">'+esc(b.c.replace(/與.*/,''))+'</td>'+
-      '<td class="td-tags">'+tagsHtml(b)+'</td>'+
-      '<td class="td-series">'+seriesHtml(b)+'</td>'+
-      '<td>'+statusBadge(b.status)+'</td>'+
-      (showDate?'<td class="td-id">'+esc(b.d||'')+'</td>':'')+
+      '<td data-label="星">'+starHtml(b.id)+'</td>'+
+      '<td class="td-id" data-label="#">'+b.id+'</td>'+
+      '<td class="td-title" data-label="書名">'+esc(b.t)+'</td>'+
+      '<td class="td-author" data-label="作者">'+esc(b.a)+'</td>'+
+      '<td class="td-cat" data-label="分類">'+esc(b.c.replace(/與.*/,''))+'</td>'+
+      '<td class="td-tags" data-label="標籤">'+tagsHtml(b)+'</td>'+
+      '<td class="td-series" data-label="系列">'+seriesHtml(b)+'</td>'+
+      '<td data-label="狀態">'+statusBadge(b.status)+'</td>'+
+      (showDate?'<td class="td-id" data-label="日期" style="position:static">'+esc(b.d||'')+'</td>':'')+
     '</tr>';
   }
 
@@ -342,11 +397,11 @@
       const done=items.filter(x=>x.status==='完成').length;
       html+='<div style="margin-bottom:1.5rem"><div style="font-weight:600;font-size:15px;margin-bottom:.4rem">'+
         esc(s)+' <span style="font-size:12px;color:var(--text3);font-weight:400">'+items.length+' 本 · 完成 '+done+'</span></div>';
-      html+='<table><tbody>';
+      html+='<table class="plain"><tbody>';
       items.forEach(b=>{
-        html+='<tr><td style="width:70px" class="td-id">第 '+esc(b.v)+' 集</td>'+
-          '<td class="td-title">'+esc(b.t)+'</td>'+
-          '<td style="width:80px">'+statusBadge(b.status)+'</td></tr>';
+        html+='<tr>'+
+          '<td class="td-title">'+esc(b.t)+' <span style="color:var(--text3);font-size:12px;font-weight:400">· 第'+esc(b.v)+'集</span></td>'+
+          '<td style="width:64px;text-align:right">'+statusBadge(b.status)+'</td></tr>';
       });
       html+='</tbody></table></div>';
     });
@@ -362,7 +417,7 @@
       card(total,'全部書籍')+card(sc.完成,'已完成')+card(sc.閱讀中,'閱讀中')+
       card(sc.未讀,'未讀')+card(starred,'已標星')+
       card((sc.完成/total*100).toFixed(1)+'%','完成率')+'</div>';
-    html+='<div class="wrap"><table><thead><tr><th class="nosort">主分類</th><th class="nosort">本數</th><th class="nosort">佔比</th></tr></thead><tbody>';
+    html+='<div class="wrap"><table class="plain"><thead><tr><th class="nosort">主分類</th><th class="nosort">本數</th><th class="nosort">佔比</th></tr></thead><tbody>';
     CATS.forEach(c=>{
       const pct=(cc[c]/total*100).toFixed(1);
       html+='<tr><td class="td-title">'+esc(c)+'</td><td class="td-id">'+cc[c]+'</td>'+
