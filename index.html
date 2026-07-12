@@ -102,6 +102,22 @@
   .ext-link:hover{color:var(--accent);border-bottom-color:var(--accent)}
   .ext-link.subtle{color:var(--text2);border-bottom-color:transparent}
   .ext-link.subtle:hover{color:var(--accent);border-bottom:1px dotted var(--accent)}
+  /* 查詢圖示按鈕 */
+  .qbtns{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+  .author-item{white-space:nowrap}
+  .qbtn{display:inline-flex;align-items:center;justify-content:center;
+    min-width:20px;height:18px;padding:0 4px;margin-left:3px;
+    font-size:10.5px;font-weight:600;line-height:1;
+    border:1px solid var(--border-strong);border-radius:4px;
+    color:var(--text2);background:var(--surface);text-decoration:none;
+    transition:.12s;vertical-align:middle}
+  .qbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-bg)}
+  .qbtn.ai{color:#7B4DCF;border-color:#B79BE8}
+  .qbtn.ai:hover{background:#F0E9FB;border-color:#7B4DCF;color:#7B4DCF}
+  @media(prefers-color-scheme:dark){
+    .qbtn.ai{color:#B79BE8;border-color:#5B3F8F}
+    .qbtn.ai:hover{background:#241838;border-color:#B79BE8;color:#B79BE8}
+  }
 
   /* Stars */
   .stars{display:flex;gap:1px;font-size:15px;line-height:1;cursor:default}
@@ -161,6 +177,7 @@
     /* 各欄內文放大 */
     tbody td.td-author{font-size:14.5px;flex-wrap:wrap}
     tbody td.td-author .ext-link{word-break:break-word}
+    tbody td.td-author .author-item{white-space:normal}
     tbody td.td-cat{font-size:14px}
     tbody td.td-tags{font-size:13px}
     /* 星等:卡片第一欄左上,無前綴 */
@@ -324,17 +341,35 @@
     for(let i=1;i<=3;i++) h+='<span class="star'+(i<=cur?' on':'')+'" data-n="'+i+'">'+(i<=cur?'★':'☆')+'</span>';
     return h+'</div>';
   }
-  // 博客來站內搜尋連結
+  // 各查詢服務的連結
   function booksLink(kw){
     return 'https://search.books.com.tw/search/query/key/'+encodeURIComponent(kw)+'/cat/all';
   }
+  function googleLink(kw){
+    return 'https://www.google.com/search?q='+encodeURIComponent(kw);
+  }
+  function pplxLink(kw){
+    return 'https://www.perplexity.ai/search?q='+encodeURIComponent(kw);
+  }
   function titleHtml(b){
-    return '<a class="ext-link" href="'+booksLink(b.t)+'" target="_blank" rel="noopener" title="在博客來查看此書">'+esc(b.t)+'</a>';
+    // 書名文字連博客來,後方三個小圖示分連不同查詢服務
+    const t=b.t;
+    return '<span class="title-cell">'+
+      '<a class="ext-link" href="'+booksLink(t)+'" target="_blank" rel="noopener" title="在博客來查看此書">'+esc(t)+'</a>'+
+      '<span class="qbtns">'+
+        '<a class="qbtn" href="'+booksLink(t)+'" target="_blank" rel="noopener" title="博客來">博</a>'+
+        '<a class="qbtn" href="'+googleLink(t+' 書評 心得')+'" target="_blank" rel="noopener" title="Google 搜尋（含 AI 總覽）">G</a>'+
+        '<a class="qbtn ai" href="'+pplxLink('介紹《'+t+'》這本書的內容與評價')+'" target="_blank" rel="noopener" title="Perplexity AI 介紹">AI</a>'+
+      '</span>'+
+    '</span>';
   }
   function authorHtml(b){
-    // 作者可能有多位(頓號分隔),各自可點
+    // 作者可點(博客來);後方加 AI 圖示查作者
     return b.a.split('、').map(a=>
-      '<a class="ext-link subtle" href="'+booksLink(a)+'" target="_blank" rel="noopener" title="在博客來查看作者">'+esc(a)+'</a>'
+      '<span class="author-item">'+
+        '<a class="ext-link subtle" href="'+booksLink(a)+'" target="_blank" rel="noopener" title="在博客來查看作者">'+esc(a)+'</a>'+
+        '<a class="qbtn ai" href="'+pplxLink('介紹作者「'+a+'」的背景與代表著作')+'" target="_blank" rel="noopener" title="Perplexity AI 介紹作者">AI</a>'+
+      '</span>'
     ).join('、');
   }
   function tagsHtml(b){
